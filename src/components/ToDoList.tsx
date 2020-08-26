@@ -1,17 +1,13 @@
 import React from 'react'
 import { Box, List, ListItem, ListItemText, ListItemIcon, Button, ListItemSecondaryAction, IconButton } from '@material-ui/core'
-import { ToDoItem } from '../App'
+import { v4 as uuid } from 'uuid'
 import InsertDriveFileIcon from '@material-ui/icons/InsertDriveFile';
 import AddIcon from '@material-ui/icons/Add';
 import DeleteIcon from '@material-ui/icons/Delete';
 import { CSSProperties } from '@material-ui/core/styles/withStyles'
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
+import { itemListState, getItemState, selectedToDoState } from '../state';
 
-
-export interface ToDoListProps {
-    items: Record<number, ToDoItem>;
-    onAddTodo(): void;
-    onDeleteTodo(id: number): void;
-}
 
 const wrapperStyle: CSSProperties = {
     display: 'flex',
@@ -21,29 +17,51 @@ const wrapperStyle: CSSProperties = {
     width: '100%'
 }
 
-export default ({ items, onAddTodo, onDeleteTodo }: ToDoListProps) => <Box style={wrapperStyle}>
-    <List>
-        {
-            Object.values(items).map((item: ToDoItem) => (<ListItem>
-                <ListItemIcon>
-                    <InsertDriveFileIcon />
-                </ListItemIcon>
-                <ListItemText>{item.text}</ListItemText>
-                <ListItemSecondaryAction>
-                    <IconButton edge="end" aria-label="delete" onClick={() => onDeleteTodo(item.id)}>
-                        <DeleteIcon />
-                    </IconButton>
-                </ListItemSecondaryAction>
-            </ListItem>))
-        }
-    </List>
+const ToDoListItem = ({ id }: { id: string }) => {
+    const itemState = getItemState(id)
+    const itemData = useRecoilValue(itemState)
+    const setSelectedToDo = useSetRecoilState(selectedToDoState)
 
-    <Button
-        variant="contained"
-        color="primary"
-        startIcon={<AddIcon />}
-        onClick={onAddTodo}
-    >
-        Add ToDo
-    </Button>
-</Box>
+    const [itemIds, setItemIds] = useRecoilState(itemListState)
+
+    return (<ListItem onClick={() => { setSelectedToDo(id) }}>
+        <ListItemIcon>
+            <InsertDriveFileIcon />
+        </ListItemIcon>
+        <ListItemText>{itemData.text}</ListItemText>
+        <ListItemSecondaryAction>
+            <IconButton edge="end" aria-label="delete" onClick={() => { setItemIds(itemIds.filter(itemId => itemId !== id)) }}>
+                <DeleteIcon />
+            </IconButton>
+        </ListItemSecondaryAction>
+    </ListItem>)
+
+}
+
+export default () => {
+
+    const [itemIds, setItemIds] = useRecoilState(itemListState)
+
+    const handleAddTodo = () => {
+        const newId = uuid()
+        setItemIds([...itemIds, newId])
+    }
+
+
+    return (<Box style={wrapperStyle}>
+        <List>
+            {
+                itemIds.map(id => <ToDoListItem id={id} />)
+            }
+        </List>
+
+        <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={handleAddTodo}
+        >
+            Add ToDo
+        </Button>
+    </Box>)
+}

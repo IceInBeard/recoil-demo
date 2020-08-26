@@ -3,15 +3,22 @@ import React from 'react'
 import { Box } from '@material-ui/core'
 import Draggable from 'react-draggable';
 import { CSSProperties } from '@material-ui/core/styles/withStyles';
+import { useRecoilValue, useRecoilState, useSetRecoilState } from 'recoil';
+import { itemListState, selectedToDoState, getItemState } from '../state';
 
 
 const ToDoItem = (props: any) => {
- const { id, x, y, text, updateItemPos, handleCardPress } = props
+ const { id, handleCardPress } = props
+ const [item, setItem] = useRecoilState(getItemState(id))
 
+ const { x, y, text } = item
 
  const handleDrag = (event: any, ui: any) => {
-
-  updateItemPos(id)(parseInt(x) + ui.deltaX, parseInt(y) + ui.deltaY)
+  setItem({
+   ...item,
+   x: x + ui.deltaX,
+   y: y + ui.deltaY
+  })
  }
 
  const cardStyles: CSSProperties = {
@@ -39,28 +46,15 @@ const ToDoItem = (props: any) => {
 }
 
 export default (props: any) => {
- const { toDoItems, setToDoItems, setSelectedToDo } = props
+ const toDoItems = useRecoilValue(itemListState)
+ const setActiveToDo = useSetRecoilState(selectedToDoState)
 
- if (!toDoItems) {
-  return null
+ const handleCardPress = (itemId: string) => () => {
+  setActiveToDo(itemId)
  }
 
- const handleCardPress = (itemId: number) => () => {
-  setSelectedToDo(itemId)
- }
-
- const updateItemPos = (itemId: number) => (x: number, y: number) => {
-  setToDoItems({
-   ...toDoItems, [itemId]: {
-    ...toDoItems[itemId],
-    x,
-    y
-   }
-  })
- }
-
- return <Box style={{ backgroundColor: 'blue', height: '100%' }}>
-  {Object.values(toDoItems).map(toDo => <ToDoItem {...toDo} updateItemPos={updateItemPos} handleCardPress={handleCardPress} />)}
+ return <Box style={{ height: '100%' }}>
+  {toDoItems.map(id => <ToDoItem id={id} handleCardPress={handleCardPress(id)} />)}
  </Box>
 
 }

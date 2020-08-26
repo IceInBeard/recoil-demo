@@ -1,12 +1,12 @@
 import React from 'react'
 import { Box, TextField } from '@material-ui/core'
 import { CSSProperties } from '@material-ui/core/styles/withStyles'
+import { useRecoilValue, useRecoilState } from 'recoil'
+import { selectedToDoState, getItemState, ToDoItem } from '../state'
 
 
 export default (props: any) => {
-  const { toDoItems, setToDoItems, selectedToDo } = props
-
-  const currentToDo = toDoItems[selectedToDo]
+  const selectedToDo = useRecoilValue(selectedToDoState)
   const wrapperStyle: CSSProperties = {
     display: 'flex',
     flexDirection: 'column',
@@ -16,31 +16,42 @@ export default (props: any) => {
     alignItems: 'center',
   }
 
+  const itemState = getItemState(selectedToDo)
 
-  if (currentToDo === undefined) {
+  if (!itemState) {
+    return <Box style={wrapperStyle}>Select a ToDo item</Box>
+  }
+
+  const [toDoItem, setToDoItem] = useRecoilState<ToDoItem>(itemState)
+
+
+
+
+  if (toDoItem === undefined) {
     return <Box style={wrapperStyle}>Select a ToDo item</Box>
   }
 
   const updateValue = (key: string) => (inputEvent: any) => {
-    const { value } = inputEvent.target
-    setToDoItems({
-      ...toDoItems, [selectedToDo]: {
-        ...currentToDo,
-        [key]: value
-      }
+    let { value } = inputEvent.target
+    if (key === 'x' || key === 'y') {
+      value = parseInt(value)
+    }
+    setToDoItem({
+      ...toDoItem,
+      [key]: value
     })
   }
 
   return (<Box style={wrapperStyle}>
     <h2>Edit item {selectedToDo}</h2>
     <Box py={1}>
-      <TextField id="standard-basic" value={currentToDo.text} onChange={updateValue('text')} label="Text" />
+      <TextField id="standard-basic" value={toDoItem.text} onChange={updateValue('text')} label="Text" />
     </Box>
     <Box py={1}>
-      <TextField id="standard-basic" value={currentToDo.x} onChange={updateValue('x')} type="number" label="X" />
+      <TextField id="standard-basic" value={toDoItem.x} onChange={updateValue('x')} type="number" label="X" />
     </Box>
     <Box py={1}>
-      <TextField id="standard-basic" value={currentToDo.y} onChange={updateValue('y')} type="number" label="Y" />
+      <TextField id="standard-basic" value={toDoItem.y} onChange={updateValue('y')} type="number" label="Y" />
     </Box>
   </Box>)
 }
